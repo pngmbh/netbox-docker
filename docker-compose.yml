@@ -1,20 +1,38 @@
-version: '3'
+version: '2'
 services:
   netbox: &netbox
     build:
       context: .
       args:
-        - BRANCH=${VERSION-master}
-    image: ninech/netbox:${VERSION-latest}
+        - BRANCH=${VERSION}
+    image: ninech/netbox:${VERSION}
     depends_on:
     - postgres
     - redis
     - netbox-worker
-    env_file: env/netbox.env
+    environment:
+      - DB_PASSWORD
+      - DB_HOST
+      - EMAIL_SERVER
+      - EMAIL_PORT
+      - EMAIL_USERNAME
+      - EMAIL_PASSWORD
+      - EMAIL_TIMEOUT
+      - EMAIL_FROM
+      - MEDIA_ROOT
+      - NAPALM_USERNAME
+      - NAPALM_PASSWORD
+      - NAPALM_TIMEOUT
+      - MAX_PAGE_SIZE
+      - REDIS_HOST
+      - REDIS_PASSWORD
+      - SECRET_KEY
+      - SUPERUSER_NAME
+      - SUPERUSER_EMAIL
+      - SUPERUSER_PASSWORD
+      - SUPERUSER_API_TOKEN
+      - WEBHOOKS_ENABLED
     volumes:
-    - ./startup_scripts:/opt/netbox/startup_scripts:ro
-    - ./initializers:/opt/netbox/initializers:ro
-    - ./configuration:/etc/netbox/config:ro
     - netbox-nginx-config:/etc/netbox-nginx/
     - netbox-static-files:/opt/netbox/netbox/static
     - netbox-media-files:/opt/netbox/netbox/media
@@ -40,7 +58,10 @@ services:
     - netbox-nginx-config:/etc/netbox-nginx/:ro
   postgres:
     image: postgres:10.4-alpine
-    env_file: env/postgres.env
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
     volumes:
     - netbox-postgres-data:/var/lib/postgresql/data
   redis:
@@ -49,7 +70,8 @@ services:
     - sh
     - -c # this is to evaluate the $REDIS_PASSWORD from the env
     - redis-server --appendonly yes --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
-    env_file: env/redis.env
+    environment:
+      - REDIS_PASSWORD
     volumes:
     - netbox-redis-data:/data
 volumes:
